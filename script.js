@@ -1,62 +1,34 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const form = document.getElementById("product-form");
-    const filterBtn = document.getElementById("filter-btn");
-    const modal = document.getElementById("modal");
-    const modalProductName = document.getElementById("modal-product-name");
-    const modalQuantity = document.getElementById("modal-quantity");
-    const modalPrice = document.getElementById("modal-price");
-    const closeModal = document.querySelector(".close");
-  
-    const products = [];
-  
-    form.addEventListener("submit", function(event) {
-      event.preventDefault();
-  
-      const name = document.getElementById("name").value;
-      const category = document.getElementById("category").value;
-      const description = document.getElementById("description").value;
-      const price = parseFloat(document.getElementById("price").value);
-      const quantity = parseInt(document.getElementById("quantity").value);
-  
-      products.push({
-        name,
-        category,
-        description,
-        price,
-        quantity,
-      });
-  
-      // Limpar o formulário após o cadastro
-      form.reset();
+// Função para criar um novo produto
+function cadastrarProduto() {
+    const nome = document.getElementById('nome_produto').value;
+    const descricao = document.getElementById('descricao').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const quantidade = parseInt(document.getElementById('quantidade').value);
+    const categoria = document.getElementById('categoria').value;
+
+    const novoProduto = {
+        name: nome,
+        description: descricao,
+        value: valor,
+        quantity: quantidade,
+        category: categoria
+    };
+
+    fetch('http://localhost:5000/api/insert/products', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(novoProduto)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Produto cadastrado com sucesso:', data);
+        // Aqui você pode atualizar a interface do usuário ou executar ações adicionais após o cadastro
+    })
+    .catch(error => {
+        console.error('Erro ao cadastrar o produto:', error);
     });
-  
-    filterBtn.addEventListener("click", function() {
-      const filterName = document.getElementById("name").value;
-      const filterCategory = document.getElementById("category").value;
-  
-      const filteredProducts = products.filter(product => {
-        return (
-          (!filterName || product.name.toLowerCase().includes(filterName.toLowerCase())) &&
-          (!filterCategory || product.category.toLowerCase().includes(filterCategory.toLowerCase()))
-        );
-      });
-  
-      if (filteredProducts.length > 0) {
-        modal.style.display = "block";
-        modalProductName.textContent = filteredProducts[0].name;
-        modalQuantity.textContent = filteredProducts[0].quantity;
-        modalPrice.textContent = filteredProducts[0].price.toFixed(2);
-      }
-    });
-  
-    closeModal.addEventListener("click", function() {
-      modal.style.display = "none";
-    });
-  
-    window.addEventListener("click", function(event) {
-      if (event.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-  });
-  
+}
+
+document.getElementById('cadastrar-btn').addEventListener('click', cadastrarProduto);
