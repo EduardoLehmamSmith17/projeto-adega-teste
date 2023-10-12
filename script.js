@@ -1,4 +1,4 @@
-// Função para criar um novo produto
+// Função para cadastrar novo produto
 function cadastrarProduto() {
     const nome = document.getElementById('nome_produto').value.trim();
     const descricao = document.getElementById('descricao').value.trim();
@@ -6,12 +6,15 @@ function cadastrarProduto() {
     const quantidade = parseInt(document.getElementById('quantidade').value.trim());
     const categoria = document.getElementById('categoria').value.trim();
 
+    const password = generatePassword();
+
     const novoProduto = {
         name: nome,
         description: descricao,
         value: valor,
         quantity: quantidade,
-        category: categoria
+        category: categoria,
+        password: password 
     };
 
     fetch('http://localhost:5000/api/insert/products', {
@@ -24,7 +27,8 @@ function cadastrarProduto() {
         .then(response => response.json())
         .then(data => {
             console.log('Produto cadastrado com sucesso:', data);
-            // Aqui você pode atualizar a interface do usuário ou executar ações adicionais após o cadastro
+            alert(`Essa é a senha do produto: ${password}, anote-a e guarde-a em um local seguro, para que possa ser usada para deletar o produto.`);
+            location.reload();
         })
         .catch(error => {
             console.error('Erro ao cadastrar o produto:', error);
@@ -32,22 +36,71 @@ function cadastrarProduto() {
 }
 
 // Função para deletar um produto
-function deletarProduto() {
-    // Aqui você precisa obter o ID do produto a ser deletado e passá-lo para a API
-    const idProduto = 1; // Substitua pelo ID correto do produto a ser deletado
-  
-    fetch(`http://localhost:5000/api/delete/products/${idProduto}`, {
-      method: 'DELETE'
+function deletarProduto(passwordProduto, nameProduto) {
+    fetch(`http://localhost:5000/api/delete/products/${passwordProduto}/${encodeURIComponent(nameProduto)}`, {
+        method: 'DELETE'
     })
-      .then(response => response.json())
-      .then(data => {
-        console.log('Produto deletado com sucesso:', data);
-        // Aqui você pode atualizar a interface do usuário ou executar ações adicionais após a exclusão
-      })
-      .catch(error => {
-        console.error('Erro ao deletar o produto:', error);
-      });
-  }
+        .then(response => {
+            if (response.status === 200) {
+                return response.json();
+            } else if (response.status === 404) {
+                return response.json().then(data => {
+                    console.error('Produto não encontrado:', data.error);
+                    alert('Produto não encontrado. Verifique o nome e a senha.');
+                });
+            } else {
+                throw new Error('Erro ao deletar o produto.');
+            }
+        })
+        .then(data => {
+            if (data.message) {
+                console.log('Produto deletado com sucesso:', data);
+                alert('Produto deletado com sucesso.');
+                location.reload(); // Recarrega a página
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao deletar o produto:', error);
+        });
+}
+
+// Função para listar produtos
+function listarProdutos() {
+    fetch('http://localhost:5000/api/read/products')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            let idCounter = 1;
+            data.forEach(produto => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${idCounter++}</td>
+                    <td>${produto.name}</td>
+                    <td>R$ ${produto.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td>${produto.quantity}</td>
+                    <td>${produto.category}</td>
+                    <td>${produto.description}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao listar os produtos:', error);
+        });
+}
+
+// Função para limpar o formulário
+function limparFormulario() {
+    document.getElementById('nome_produto').value = '';
+    document.getElementById('descricao').value = '';
+    document.getElementById('valor').value = '';
+    document.getElementById('quantidade').value = '';
+    document.getElementById('categoria').value = '';
+    document.getElementById('delete_password').value = '';
+    document.getElementById('delete_nome').value = '';
+}
 
 // Função para validar o campo Nome
 function validarNome() {
@@ -55,12 +108,11 @@ function validarNome() {
     const nomeValue = nomeInput.value;
     const nomeError = document.getElementById('nome_produto_error');
 
-    // Verifica se o valor contém números ou caracteres especiais
     if (/[\d!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(nomeValue) || nomeValue.trim() === '') {
         nomeError.textContent = 'Nome inválido';
         return false;
     } else {
-        nomeError.textContent = ''; // Limpa a mensagem de erro
+        nomeError.textContent = ''; 
         return true;
     }
 }
@@ -71,12 +123,11 @@ function validarValor() {
     const valorValue = valorInput.value;
     const valorError = document.getElementById('valor_error');
 
-    // Verifica se o valor não é um número ou está vazio ou contém caracteres especiais
     if (isNaN(parseFloat(valorValue)) || !isFinite(valorValue) || valorValue.trim() === '') {
         valorError.textContent = 'Valor inválido';
         return false;
     } else {
-        valorError.textContent = ''; // Limpa a mensagem de erro
+        valorError.textContent = '';
         return true;
     }
 }
@@ -87,12 +138,11 @@ function validarCategoria() {
     const categoriaValue = categoriaInput.value;
     const categoriaError = document.getElementById('categoria_error');
 
-    // Verifica se o valor contém números ou caracteres especiais
     if (/[\d!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(categoriaValue) || categoriaValue.trim() === '') {
         categoriaError.textContent = 'Categoria inválida';
         return false;
     } else {
-        categoriaError.textContent = ''; // Limpa a mensagem de erro
+        categoriaError.textContent = '';
         return true;
     }
 }
@@ -103,12 +153,11 @@ function validarQuantidade() {
     const quantidadeValue = quantidadeInput.value;
     const quantidadeError = document.getElementById('quantidade_error');
 
-    // Verifica se o valor não é um número ou está vazio ou contém caracteres especiais
     if (isNaN(parseInt(quantidadeValue)) || !isFinite(quantidadeValue) || quantidadeValue.trim() === '') {
         quantidadeError.textContent = 'Quantidade inválida';
         return false;
     } else {
-        quantidadeError.textContent = ''; // Limpa a mensagem de erro
+        quantidadeError.textContent = '';
         return true;
     }
 }
@@ -119,17 +168,16 @@ function validarDescricao() {
     const descricaoValue = descricaoInput.value;
     const descricaoError = document.getElementById('descricao_error');
 
-    // Verifica se a descrição está vazia
     if (descricaoValue.trim() === '') {
         descricaoError.textContent = 'Descrição não pode ser vazia';
         return false;
     } else {
-        descricaoError.textContent = ''; // Limpa a mensagem de erro
+        descricaoError.textContent = '';
         return true;
     }
 }
 
-// Função para realizar todas as validações
+// Função para realizar todas as validações do formulário
 function validarFormulario() {
     const nomeValido = validarNome();
     const valorValido = validarValor();
@@ -137,47 +185,82 @@ function validarFormulario() {
     const quantidadeValida = validarQuantidade();
     const descricaoValida = validarDescricao();
 
-    // Verifica se todos os campos são válidos
     if (nomeValido && valorValido && quantidadeValida && descricaoValida && categoriaValida) {
         return true;
     } else {
-        // Se algum campo não é válido, impede o envio do formulário
         return false;
     }
 }
 
-// Adiciona um ouvinte de evento para o botão "Cadastrar" que chama a função de validação
-document.getElementById('cadastrar-btn').addEventListener('click', function (event) {
-    if (!validarFormulario()) {
-        event.preventDefault();
-    } else {
-        // Se o formulário é válido, envia os dados para o servidor
+//Função para gerar senha do produto
+function generatePassword() {
+    const randomPassword = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    return randomPassword;
+}
+
+// Função para abrir o modal de cadastrar produto
+function openModalCadastrar() {
+    limparFormulario();
+    const modal = document.getElementById('product-modal');
+    modal.style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden'; 
+}
+
+// Função para abrir o modal de deletar produto
+function openModalDeletar() {
+    limparFormulario();
+    const modal = document.getElementById('delete-modal');
+    modal.style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Função para fechar o modal de deletar produto
+function fecharModalDeletar() {
+    limparFormulario();
+    const modal = document.getElementById('delete-modal');
+    modal.style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Função para fechar o modal de cadastrar produto
+function fecharModalCadastrar() {
+    limparFormulario();
+    const modal = document.getElementById('product-modal');
+    modal.style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Função para confirmar o cadastro do produto
+function confirmarCadastro() {
+    if (validarFormulario()) {
         cadastrarProduto();
-    }
-    
-    // Limpar os campos após o cadastro
-    document.getElementById('nome_produto').value = '';
-    document.getElementById('descricao').value = '';
-    document.getElementById('valor').value = '';
-    document.getElementById('quantidade').value = '';
-    document.getElementById('categoria').value = '';
-});
-
-// Adiciona um ouvinte de evento para o botão "Deletar" que chama a função de deletar
-document.getElementById('deletar-btn').addEventListener('click', function (event) {
-    if (!validarFormulario()) {
-        event.preventDefault();
+        limparFormulario();
+        fecharModalCadastrar();
     } else {
-        // Se o formulário é válido, envia os dados para o servidor
-        deletarProduto();
+        alert('Por favor, preencha todos os campos corretamente.');
     }
-    
-    // Limpar os campos após o cadastro
-    document.getElementById('nome_produto').value = '';
-    document.getElementById('descricao').value = '';
-    document.getElementById('valor').value = '';
-    document.getElementById('quantidade').value = '';
-    document.getElementById('categoria').value = '';
+}
+
+// Função para confirmar a exclusão de produto
+function confirmarDelecao() {
+    const modal = document.getElementById('information-product-modal');
+    const idProduto = document.getElementById('delete_password').value.trim();
+    const nomeProduto = document.getElementById('delete_nome').value.trim();
+
+    if (idProduto !== '' && nomeProduto !== '') {
+        deletarProduto(idProduto, nomeProduto);
+        limparFormulario();
+        fecharModalDeletar();
+    } else {
+        alert('ID de produto ou nome de produto inválido');
+    }
+}
+
+// Este cara é executado quando a página é carregada
+document.addEventListener('DOMContentLoaded', function () {
+    listarProdutos();
 });
-
-

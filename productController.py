@@ -7,7 +7,6 @@ import re
 app = Flask(__name__)
 CORS(app)
 
-
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
@@ -16,32 +15,23 @@ def get_db_connection():
             password='',
             database='bdprojectadegatcc'
         )
-        print("Conexão com o banco de dados realizada com sucesso!")
         return connection
     except mysql.connector.Error as err:
         print(f"Erro na conexão com o banco de dados: {err}")
         return None
 
-
 def close_db_connection(connection):
     if connection:
         connection.close()
 
-# Função para validar se uma string não contém números ou caracteres especiais
 def is_valid_string(value):
-    # Verifica se a string contém apenas letras e não está vazia
-    if not value.strip():  # Verifica se está vazia ou contém apenas espaços em branco
-        return False
-    if re.search(r'[0-9!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]', value):
+    if not value.strip() or re.search(r'[0-9!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]', value) or value == "":
         return False
     return True
 
-# Função para validar se uma variável é um float válido
 def is_valid_float(value):
     try:
-        # Tenta converter o valor em float
         float_value = float(value)
-        # Verifica se o valor não é infinito (como resultado de divisão por zero)
         if not math.isinf(float_value):
             return True
         else:
@@ -49,16 +39,13 @@ def is_valid_float(value):
     except (ValueError, TypeError):
         return False
 
-# Função para validar se uma variável é um inteiro válido
 def is_valid_integer(value):
     try:
-        # Tenta converter o valor em um inteiro
         int_value = int(value)
         return True
     except (ValueError, TypeError):
         return False
 
-# CREATE - Endpoint para inserir um produto
 @app.route('/api/insert/products', methods=['POST'])
 def insert_product():
     try:
@@ -68,72 +55,96 @@ def insert_product():
         value = data.get('value')
         quantity = data.get('quantity')
         category = data.get('category')
+        password = data.get('password')
 
-        # Validações
         if not is_valid_string(name):
             return jsonify({"error": "Nome inválido"}), 400
         if not is_valid_string(category):
             return jsonify({"error": "Categoria inválida"}), 400
-        if not is_valid_string(description):
-            return jsonify({"error": "Descrição inválida"}), 400
         if not is_valid_float(value):
             return jsonify({"error": "Valor inválido"}), 400
         if not is_valid_integer(quantity):
             return jsonify({"error": "Quantidade inválida"}), 400
 
-        # Conecte-se ao banco de dados
         connection = get_db_connection()
         cursor = connection.cursor()
-
-        # Componha o comando SQL parametrizado
-        command = f'INSERT INTO product (name, description, value, quantity, category) VALUES ("{name}", "{description}", {value}, {quantity}, "{category}")'
-        # values = (name, description, value, quantity, category)
-
-        # Execute o comando SQL
+        
+        command = f'INSERT INTO product (name, description, value, quantity, category, password) VALUES ("{name}", "{description}", {value}, {quantity}, "{category}", {password})'
+        
         cursor.execute(command)
         connection.commit()
 
-        # fechanco a conexao
         close_db_connection(connection)
 
-        # Crie um dicionário com os atributos do produto inserido
         inserted_product = {
             "name": name,
             "description": description,
             "value": value,
             "quantity": quantity,
-            "category": category
+            "category": category,
+            "password": password
         }
 
-        # Retorne os atributos do produto inserido como JSON
         return jsonify(inserted_product)
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
 
-# DELETE - Endpoint para excluir um produto
-@app.route('/api/delete/products/<int:id>', methods=['DELETE'])
-def delete_product(id):
+@app.route('/api/delete/products/<string:password>/<string:name>', methods=['DELETE'])
+def delete_product(password, name):
     try:
-        # Conecte-se ao banco de dados
         connection = get_db_connection()
         cursor = connection.cursor()
 
-        # Componha o comando SQL parametrizado
-        command = f'DELETE FROM product WHERE id = {id}'
+        product = cursor.execute(f'SELECT * FROM product WHERE password = %s and name LIKE %s', (f'{password}', f'%{name}%'))
+        product = cursor.fetchone()
 
-        # Execute o comando SQL
-        cursor.execute(command)
-        connection.commit()
+        if product is None:
+            response = {"error": "Produto não encontrado"}
+            status_code = 404
+        else:
+            command = f'DELETE FROM product WHERE password = %s and name LIKE %s'
+            cursor.execute(command, (f'{password}', f'%{name}%'))
+            connection.commit()
 
-        # Fechando a conexão
-        close_db_connection(connection)
+            close_db_connection(connection)
 
-        # Produto excluído com sucesso
-        return jsonify({"message": "Produto excluído com sucesso!"})
+            response = {"message": "Produto excluído com sucesso!", "product": product}
+            status_code = 200
+
+        return jsonify(response), status_code
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/read/products', methods=['GET'])
+def list_product():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        command = f'SELECT * FROM product ORDER BY value DESC LIMIT 10'
+
+        cursor.execute(command)
+        products = []
+
+        for row in cursor.fetchall():
+            product = {
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+                "value": row[3],
+                "quantity": row[4],
+                "category": row[5]
+            }
+            products.append(product)
+
+        close_db_connection(connection)
+
+        return jsonify(products)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run()
