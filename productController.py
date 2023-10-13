@@ -103,7 +103,7 @@ def delete_product(password, name):
             response = {"error": "Produto não encontrado"}
             status_code = 404
         else:
-            command = f'DELETE FROM product WHERE password = %s and name LIKE %s'
+            command = f'UPDATE product SET removed = 1 WHERE password = %s and name LIKE %s'
             cursor.execute(command, (f'{password}', f'%{name}%'))
             connection.commit()
 
@@ -123,7 +123,7 @@ def list_product():
         connection = get_db_connection()
         cursor = connection.cursor()
         
-        command = f'SELECT * FROM product ORDER BY value DESC LIMIT 10'
+        command = f'SELECT * FROM product Where Removed = 0 ORDER BY value DESC LIMIT 10'
 
         cursor.execute(command)
         products = []

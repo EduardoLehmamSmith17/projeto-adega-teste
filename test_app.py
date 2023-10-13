@@ -9,7 +9,7 @@ class TestProductAPI(unittest.TestCase):
         data = {
             "name": "Produto de Teste",
             "description": "Descrição do Produto de Teste",
-            "value": 10.99,
+            "value": 00.99,
             "quantity": 100,
             "category": "Teste",
             "password": "123456"
@@ -30,7 +30,7 @@ class TestProductAPI(unittest.TestCase):
         data = {
             "name": "12345",
             "description": "Descrição do Produto de Teste",
-            "value": 10.99,
+            "value": 00.99,
             "quantity": 100,
             "category": "Teste"
         }
@@ -46,7 +46,7 @@ class TestProductAPI(unittest.TestCase):
         data = {
             "name": "Produto de Teste",
             "description": "Descrição do Produto de Teste",
-            "value": 10.99,
+            "value": 00.99,
             "quantity": 100,
             "category": "Categoria#Teste"
         }
@@ -78,7 +78,7 @@ class TestProductAPI(unittest.TestCase):
         data = {
             "name": "Produto de Teste",
             "description": "Descrição do Produto de Teste",
-            "value": 10.99,
+            "value": 00.99,
             "quantity": "QuantidadeInválida",
             "category": "Teste"
         }
