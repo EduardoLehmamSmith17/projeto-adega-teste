@@ -117,6 +117,44 @@ def delete_product(password, name):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/filter/products/<string:password>/<string:name>', methods=['GET'])
+def filter_products(password, name):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Consulta para buscar produtos com base nos parâmetros usando placeholders seguros
+        query = 'SELECT * FROM product WHERE password = %s AND name LIKE %s AND removed = 0'
+        cursor.execute(query, (password, f'%{name}%'))
+        products = cursor.fetchall()
+
+        if not products:
+            response = {"error": "Nenhum produto encontrado"}
+            status_code = 404
+        else:
+            # Converter os resultados em uma lista de dicionários
+            product_list = []
+            for product in products:
+                product_dict = {
+                    "id": product[0],
+                    "name": product[1],
+                    "description": product[2],
+                    "value": product[3],
+                    "quantity": product[4],
+                    "category": product[5],
+                    "password": product[6]
+                }
+                product_list.append(product_dict)
+
+            response = {"products": product_list}
+            status_code = 200
+
+        return jsonify(response), status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/read/products', methods=['GET'])
 def list_product():
     try:

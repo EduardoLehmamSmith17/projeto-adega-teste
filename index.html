@@ -14,8 +14,12 @@
 <body>
     <div class="container">
         <!-- Botões para abrir os modais -->
-        <button class="widget-button1" onclick="openModalCadastrar()" style="font-family: 'Sedgwick-Ave-Display', cursive;">Cadastrar produto</button>
-        <button class="widget-button1" onclick="openModalDeletar()" style="font-family: 'Sedgwick-Ave-Display', cursive;">Deletar produto</button>
+        <button class="widget-button1" onclick="openModalCadastrar()"
+            style="font-family: 'Sedgwick-Ave-Display', cursive;">Cadastrar produto</button>
+        <button class="widget-button1" onclick="openModalDeletar()"
+            style="font-family: 'Sedgwick-Ave-Display', cursive;">Deletar produto</button>
+        <button class="widget-button1" onclick="openModalPesquisar()"
+            style="font-family: 'Sedgwick-Ave-Display', cursive;">Filtrar produto</button>
 
         <h1 style="font-family: 'Sedgwick-Ave-Display', cursive;">Lista de Produtos</h1>
         <!-- Tabela para listar os produtos -->
@@ -38,7 +42,7 @@
     </div>
 
     <div id="overlay" class="overlay" style="display: none;"></div>
-    
+
     <!-- Modal para preenchimento de informações -->
     <div id="product-modal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -75,8 +79,10 @@
             </div>
 
             <!-- Botões do modal -->
-            <button class="widget-button2" onclick="confirmarCadastro()" style="font-family: 'Merriweather', sans-serif">Salvar</button>
-            <button class="widget-button2" onclick="fecharModalCadastrar()" style="font-family: 'Merriweather', sans-serif">Fechar</button>
+            <button class="widget-button2" onclick="confirmarCadastro()"
+                style="font-family: 'Merriweather', sans-serif">Salvar</button>
+            <button class="widget-button2" onclick="fecharModalCadastrar()"
+                style="font-family: 'Merriweather', sans-serif">Fechar</button>
         </div>
     </div>
 
@@ -97,6 +103,53 @@
             <!-- Botões do modal -->
             <button class="widget-button2" id="confirme-delete-btn" onclick="confirmarDelecao()">Sim</button>
             <button class="widget-button2" id="close-delete-modal" onclick="fecharModalDeletar()">Não</button>
+        </div>
+    </div>
+
+    <div id="pesquisa-modal" class="modal" style="display: none;">
+        <div class="modal-content pesquisa-modal-content">
+            <h2 style="font-family: 'Sedgwick-Ave-Display', cursive;">Pesquisar Produto</h2>
+            <!-- Campos de preenchimento -->
+            <span class="error" id="pesquisa_password_error"></span>
+            <div class="form-group">
+                <label for="pesquisa_password" style="font-family: 'Merriweather', sans-serif">Senha do produto:</label>
+                <input type="text" id="pesquisa_password" required>
+            </div>
+            <span class="error" id="pesquisa_nome_error"></span>
+            <div class="form-group">
+                <label for="pesquisa_nome" style="font-family: 'Merriweather', sans-serif">Nome do Produto:</label>
+                <input type="text" id="pesquisa_nome" required>
+            </div>
+            <!-- Botões do modal -->
+            <button class="widget-button2" id="confirme-pesquisa-btn" onclick="confirmarPesquisa()">Sim</button>
+            <button class="widget-button2" id="close-pesquisa-modal" onclick="fecharModalPesquisa()">Não</button>
+        </div>
+    </div>
+
+    <div id="informations-product-modal" class="modal informations-modal" style="display: none;">
+        <div class="modal-content product-informations-modal-content">
+            <button id="fechar-modal" class="close-button" onclick="fecharModalInformacoesProduto()">&times;</button>
+            <p class="modal-title">Informações do Produto</p>
+            <div class="product-info-item">
+                <strong>Nome:</strong>
+                <span id="informations-product-nome"></span>
+            </div>
+            <div class="product-info-item">
+                <strong>Valor:</strong>
+                <span id="informations-product-valor"></span>
+            </div>
+            <div class="product-info-item">
+                <strong>Quantidade:</strong>
+                <span id="informations-product-quantidade"></span>
+            </div>
+            <div class="product-info-item">
+                <strong>Categoria:</strong>
+                <span id="informations-product-categoria"></span>
+            </div>
+            <div class="product-info-item">
+                <strong>Descrição:</strong>
+                <span id="informations-product-descricao"></span>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

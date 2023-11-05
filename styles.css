@@ -161,3 +161,45 @@ h2 {
     text-align: center;
     position: relative;
 }
+
+.informations-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    width: auto;
+    max-width: 80%; /* Define a largura máxima do modal */
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1001; /* Defina um valor alto para focalizar o modal */
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.product-info-item {
+    margin-bottom: 5px; /* Adiciona um espaço entre os itens */
+    text-align: left; /* Alinha o texto à esquerda */
+    font-size: 15px; /* Define o tamanho da fonte */
+    cursor: pointer;
+}
+
+.modal-title {
+    text-align: center;
+    font-family: 'Sedgwick-Ave-Display', cursive;
+    font-size: 18px; /* Tamanho do título */
+    margin-top: 10px; /* Espaço acima do título */
+    font-weight: bold; /* Torna o título em negrito */
+    text-decoration: underline; /* Sublinha o título */
+}
+
+.overlay {
+    z-index: 1000; /* Defina um valor menor do que o modal para desfocar o conteúdo por trás */
+}

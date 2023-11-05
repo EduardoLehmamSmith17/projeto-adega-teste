@@ -1,3 +1,30 @@
+// Função para listar produtos
+function listarProdutos() {
+    fetch('http://localhost:5000/api/read/products')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            let idCounter = 1;
+            data.forEach(produto => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${idCounter++}</td>
+                    <td>${produto.name}</td>
+                    <td>R$ ${produto.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td>${produto.quantity}</td>
+                    <td>${produto.category}</td>
+                    <td>${produto.description}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao listar os produtos:', error);
+        });
+}
+
 // Função para cadastrar novo produto
 function cadastrarProduto() {
     const nome = document.getElementById('nome_produto').value.trim();
@@ -14,7 +41,7 @@ function cadastrarProduto() {
         value: valor,
         quantity: quantidade,
         category: categoria,
-        password: password 
+        password: password
     };
 
     fetch('http://localhost:5000/api/insert/products', {
@@ -56,7 +83,7 @@ function deletarProduto(passwordProduto, nameProduto) {
             if (data.message) {
                 console.log('Produto deletado com sucesso:', data);
                 alert('Produto deletado com sucesso.');
-                location.reload(); // Recarrega a página
+                location.reload();
             }
         })
         .catch(error => {
@@ -64,30 +91,46 @@ function deletarProduto(passwordProduto, nameProduto) {
         });
 }
 
-// Função para listar produtos
-function listarProdutos() {
-    fetch('http://localhost:5000/api/read/products')
-        .then(response => response.json())
+// Função para pesquisar um produto
+function pesquisarProduto(idProduto, nomeProduto) {
+    fetch(`http://localhost:5000/api/filter/products/${idProduto}/${encodeURIComponent(nomeProduto)}`, {
+        method: 'GET'
+    })
+        .then(response => {
+            if (response.status === 200) {
+                return response.json();
+            } else if (response.status === 404) {
+                return response.json().then(data => {
+                    console.error('Produto não encontrado:', data.error);
+                    throw new Error('Produto não encontrado. Verifique o nome e a senha. Ou o mesmo foi excluído');
+                });
+            } else {
+                throw new Error('Erro ao pesquisar o produto.');
+            }
+        })
         .then(data => {
-            const tbody = document.querySelector('tbody');
-            tbody.innerHTML = '';
+            if (data.products && data.products.length > 0) {
+                const product = data.products[0];
 
-            let idCounter = 1;
-            data.forEach(produto => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${idCounter++}</td>
-                    <td>${produto.name}</td>
-                    <td>R$ ${produto.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    <td>${produto.quantity}</td>
-                    <td>${produto.category}</td>
-                    <td>${produto.description}</td>
-                `;
-                tbody.appendChild(row);
-            });
+                // Preencher as divs do modal de informações do produto
+                document.getElementById('informations-product-nome').textContent = product.name;
+                document.getElementById('informations-product-valor').textContent = `R$ ${product.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                document.getElementById('informations-product-quantidade').textContent = product.quantity;
+                document.getElementById('informations-product-categoria').textContent = product.category;
+                document.getElementById('informations-product-descricao').textContent = product.description;
+
+                // Abrir o modal de informações do produto
+                const modal = document.getElementById('informations-product-modal');
+                modal.style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            } else {
+                throw new Error('Produto não encontrado');
+            }
         })
         .catch(error => {
-            console.error('Erro ao listar os produtos:', error);
+            console.error('Erro ao pesquisar o produto:', error);
+            alert(error.message);
         });
 }
 
@@ -100,6 +143,8 @@ function limparFormulario() {
     document.getElementById('categoria').value = '';
     document.getElementById('delete_password').value = '';
     document.getElementById('delete_nome').value = '';
+    document.getElementById('pesquisa_password').value = '';
+    document.getElementById('pesquisa_nome').value = '';
 }
 
 // Função para validar o campo Nome
@@ -112,7 +157,7 @@ function validarNome() {
         nomeError.textContent = 'Nome inválido';
         return false;
     } else {
-        nomeError.textContent = ''; 
+        nomeError.textContent = '';
         return true;
     }
 }
@@ -204,13 +249,22 @@ function openModalCadastrar() {
     const modal = document.getElementById('product-modal');
     modal.style.display = 'block';
     document.getElementById('overlay').style.display = 'block';
-    document.body.style.overflow = 'hidden'; 
+    document.body.style.overflow = 'hidden';
 }
 
 // Função para abrir o modal de deletar produto
 function openModalDeletar() {
     limparFormulario();
     const modal = document.getElementById('delete-modal');
+    modal.style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Função para abrir o modal de pesquisar produto
+function openModalPesquisar() {
+    limparFormulario();
+    const modal = document.getElementById('pesquisa-modal');
     modal.style.display = 'block';
     document.getElementById('overlay').style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -234,6 +288,24 @@ function fecharModalCadastrar() {
     document.body.style.overflow = 'auto';
 }
 
+// Função para fechar o modal de deletar produto
+function fecharModalPesquisa() {
+    limparFormulario();
+    const modal = document.getElementById('pesquisa-modal');
+    modal.style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function fecharModalInformacoesProduto() {
+    const modal = document.getElementById('informations-product-modal');
+    modal.style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    limparFormulario();
+    fecharModalPesquisa()
+}
+
 // Função para confirmar o cadastro do produto
 function confirmarCadastro() {
     if (validarFormulario()) {
@@ -247,7 +319,6 @@ function confirmarCadastro() {
 
 // Função para confirmar a exclusão de produto
 function confirmarDelecao() {
-    const modal = document.getElementById('information-product-modal');
     const idProduto = document.getElementById('delete_password').value.trim();
     const nomeProduto = document.getElementById('delete_nome').value.trim();
 
@@ -255,6 +326,19 @@ function confirmarDelecao() {
         deletarProduto(idProduto, nomeProduto);
         limparFormulario();
         fecharModalDeletar();
+    } else {
+        alert('ID de produto ou nome de produto inválido');
+    }
+}
+
+// Função para confirmar a pesquisa de produto
+function confirmarPesquisa() {
+    const idProduto = document.getElementById('pesquisa_password').value.trim();
+    const nomeProduto = document.getElementById('pesquisa_nome').value.trim();
+
+    if (idProduto !== '' && nomeProduto !== '') {
+        fecharModalPesquisa();
+        pesquisarProduto(idProduto, nomeProduto);
     } else {
         alert('ID de produto ou nome de produto inválido');
     }
