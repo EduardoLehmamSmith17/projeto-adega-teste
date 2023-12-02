@@ -134,6 +134,33 @@ function pesquisarProduto(idProduto, nomeProduto) {
         });
 }
 
+// Função para exportar relatório em Excel
+function exportarRelatorio() {
+    fetch('http://localhost:5000/api/export/excel', {
+        method: 'GET'
+    })
+        .then(response => {
+            if (response.status === 200) {
+                return response.blob();
+            } else {
+                throw new Error('Erro ao exportar relatório');
+            }
+        })
+        .then(blob => {
+            // Criar um link temporário e clicar nele para iniciar o download do arquivo
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'relatorio_produtos.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })
+        .catch(error => {
+            console.error('Erro ao exportar relatório:', error);
+            alert('Erro ao exportar relatório. Verifique o console para mais informações.');
+        });
+}
+
 // Função para limpar o formulário
 function limparFormulario() {
     document.getElementById('nome_produto').value = '';

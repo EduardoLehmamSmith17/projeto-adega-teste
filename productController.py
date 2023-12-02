@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
 import re
+import pandas as pd
+from flask import send_file
 
 app = Flask(__name__)
 CORS(app)
@@ -183,6 +185,42 @@ def list_product():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/export/excel', methods=['GET'])
+def export_to_excel():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Consulta para buscar produtos ordenados por valor de forma decrescente
+        query = 'SELECT id, name, description, value, quantity, category FROM product WHERE removed = 0 ORDER BY value DESC'
+        cursor.execute(query)
+        products = cursor.fetchall()
+
+        if not products:
+            response = {"error": "Nenhum produto encontrado"}
+            status_code = 404
+        else:
+            # Converter os resultados em um DataFrame do pandas
+            columns = ["id", "name", "description", "value", "quantity", "category"]
+            product_df = pd.DataFrame(products, columns=columns)
+
+            # Remover a coluna 'password' se não for necessária
+            if 'password' in product_df.columns:
+                product_df = product_df.drop(columns=['password'])
+
+            # Exportar para um arquivo Excel temporário
+            excel_file = "products_export.xlsx"
+            product_df.to_excel(excel_file, index=False)
+
+            close_db_connection(connection)
+
+            # Enviar o arquivo Excel como resposta
+            return send_file(excel_file, as_attachment=True)
+
+    except Exception as e:
+        print(f"Erro no servidor Flask: {str(e)}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 if __name__ == '__main__':
     app.run()
